@@ -30,28 +30,52 @@
             </div>
             
             <nav class="nav-tabs">
+                <!-- Public Tab: Accessible to Students -->
                 <button class="nav-tab active" data-tab="google-form-tab">
                     <i class="fa-solid fa-square-poll-vertical"></i>
                     <span>Student Survey Form</span>
                 </button>
-                <button class="nav-tab" data-tab="dashboard-tab">
+                
+                <!-- Restricted Tabs: Accessible only to Head/Principal/Admin -->
+                <button class="nav-tab admin-nav-item hidden" data-tab="dashboard-tab">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Analytics Dashboard</span>
                 </button>
-                <button class="nav-tab" data-tab="models-tab">
+                <button class="nav-tab admin-nav-item hidden" data-tab="models-tab">
                     <i class="fa-solid fa-brain"></i>
                     <span>AI Model Comparison</span>
                 </button>
-                <button class="nav-tab" data-tab="responses-tab">
+                <button class="nav-tab admin-nav-item hidden" data-tab="responses-tab">
                     <i class="fa-solid fa-table-list"></i>
                     <span>Survey Responses</span>
                 </button>
             </nav>
             
             <div class="header-actions">
-                <span class="status-badge live-status">
-                    <span class="pulse-dot"></span> AI Engine Active
+                <!-- Student Portal indicator (shown when logged out) -->
+                <span id="student-portal-tag" class="portal-badge student">
+                    <i class="fa-solid fa-user-graduate"></i> Student View
                 </span>
+
+                <!-- Authenticated User Profile (shown when logged in) -->
+                <div id="auth-user-badge" class="auth-profile-badge hidden">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span id="auth-user-text">Principal</span>
+                </div>
+
+                <!-- Login Button (shown when logged out) -->
+                <button id="open-login-btn" class="login-action-btn" title="Principal / HOD / Admin Login">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Staff Login</span>
+                </button>
+
+                <!-- Logout Button (shown when logged in) -->
+                <button id="logout-btn" class="logout-action-btn hidden" title="Logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+
+                <!-- Dark/Light Theme Toggle -->
                 <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
                     <i class="fa-solid fa-moon"></i>
                 </button>
@@ -62,7 +86,7 @@
     <!-- Main Container -->
     <main class="main-content">
         
-        <!-- TAB 1: GOOGLE FORM STYLE SURVEY FORM -->
+        <!-- TAB 1: GOOGLE FORM STYLE SURVEY FORM (STUDENTS VIEW) -->
         <section id="google-form-tab" class="tab-pane active">
             <div class="google-form-wrapper">
                 <!-- Google Form Header Card -->
@@ -209,7 +233,7 @@
                 <div id="survey-success-card" class="gf-success-card hidden">
                     <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
                     <h3>Response Recorded!</h3>
-                    <p>Thank you for submitting your survey feedback. Your input has been processed by our AI Model and updated live in the Dashboard.</p>
+                    <p>Thank you for submitting your survey feedback. Your input has been recorded and submitted to the institute management.</p>
                     
                     <div class="sentiment-result-summary" id="result-summary-box">
                         <!-- Filled by JS -->
@@ -222,14 +246,14 @@
             </div>
         </section>
 
-        <!-- TAB 2: ANALYTICS DASHBOARD -->
+        <!-- TAB 2: ANALYTICS DASHBOARD (RESTRICTED TO HEAD & PRINCIPAL) -->
         <section id="dashboard-tab" class="tab-pane">
             
             <!-- Dashboard Controls Bar -->
             <div class="dash-controls">
                 <div class="dash-title">
                     <h2><i class="fa-solid fa-chart-pie"></i> Executive Sentiment Dashboard</h2>
-                    <p>Comprehensive survey analytics across institute facilities and departments.</p>
+                    <p id="dashboard-subtitle">Comprehensive survey analytics across institute facilities and departments.</p>
                 </div>
                 <div class="dash-actions">
                     <button id="refresh-dash-btn" class="secondary-btn"><i class="fa-solid fa-rotate-right"></i> Refresh Data</button>
@@ -354,7 +378,7 @@
             </div>
         </section>
 
-        <!-- TAB 3: AI MODEL COMPARISON -->
+        <!-- TAB 3: AI MODEL COMPARISON (RESTRICTED) -->
         <section id="models-tab" class="tab-pane">
             <div class="section-title-box">
                 <h2><i class="fa-solid fa-code-compare"></i> Machine Learning Algorithm Comparative Analysis</h2>
@@ -457,12 +481,12 @@
             </div>
         </section>
 
-        <!-- TAB 4: SURVEY RESPONSES TABLE -->
+        <!-- TAB 4: SURVEY RESPONSES TABLE (RESTRICTED) -->
         <section id="responses-tab" class="tab-pane">
             <div class="responses-header">
                 <div>
                     <h2><i class="fa-solid fa-database"></i> Survey Responses Explorer</h2>
-                    <p>View, filter, and search through all submitted student feedback records.</p>
+                    <p>View, filter, and search through submitted student feedback records.</p>
                 </div>
             </div>
 
@@ -544,6 +568,63 @@
         </section>
 
     </main>
+
+    <!-- Staff & Management Login Modal -->
+    <div id="login-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div>
+                        <h3>Staff & Management Login</h3>
+                        <p>Authorized access for Principal, HODs, and Admin</p>
+                    </div>
+                </div>
+                <button type="button" id="close-modal-btn" class="modal-close-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Quick Demo Login Chips -->
+                <div class="quick-login-section">
+                    <span class="quick-login-title"><i class="fa-solid fa-bolt"></i> Quick Fill Demo Accounts:</span>
+                    <div class="quick-chips">
+                        <button type="button" class="quick-chip" data-user="principal" data-pass="admin123">
+                            <i class="fa-solid fa-award"></i> Principal (Full Access)
+                        </button>
+                        <button type="button" class="quick-chip" data-user="hod_cse" data-pass="hod123">
+                            <i class="fa-solid fa-laptop-code"></i> HOD (Computer Science)
+                        </button>
+                        <button type="button" class="quick-chip" data-user="admin" data-pass="admin123">
+                            <i class="fa-solid fa-gear"></i> Admin
+                        </button>
+                    </div>
+                </div>
+
+                <form id="staff-login-form">
+                    <div class="form-field">
+                        <label for="login-username">Username</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="login-username" class="modal-input" placeholder="e.g. principal or hod_cse" required autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="login-password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="login-password" class="modal-input" placeholder="Enter password" required autocomplete="current-password">
+                        </div>
+                    </div>
+
+                    <div id="login-error-alert" class="login-alert hidden"></div>
+
+                    <button type="submit" id="login-submit-btn" class="modal-submit-btn">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="app-footer">

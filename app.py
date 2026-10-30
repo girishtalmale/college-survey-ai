@@ -3,19 +3,66 @@ import json
 import pickle
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 
 from dataset_generator import generate_survey_dataset
 from ml_model_training import preprocess_text, train_and_evaluate_models
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = os.environ.get("SECRET_KEY", "edupulse-ai-secret-key-2026-management")
 CORS(app)
 
 DATASET_FILE = "college_survey_corpus.csv"
 MODEL_FILE = "sentiment_model.pkl"
 VECTORIZER_FILE = "tfidf_vectorizer.pkl"
 METRICS_FILE = "model_metrics.json"
+
+# Authorized Staff & Management Users
+USERS = {
+    "principal": {
+        "password": "admin123",
+        "role": "Principal",
+        "name": "Dr. R. Sharma",
+        "title": "Principal / Director",
+        "department": "All"
+    },
+    "admin": {
+        "password": "admin123",
+        "role": "Administrator",
+        "name": "System Administrator",
+        "title": "Institutional Admin",
+        "department": "All"
+    },
+    "hod_cse": {
+        "password": "hod123",
+        "role": "HOD",
+        "name": "Prof. S. Verma",
+        "title": "HOD - Computer Science",
+        "department": "Computer Science & Engineering"
+    },
+    "hod_ece": {
+        "password": "hod123",
+        "role": "HOD",
+        "name": "Prof. A. Kulkarni",
+        "title": "HOD - Electronics & Comm.",
+        "department": "Electronics & Communication"
+    },
+    "hod_me": {
+        "password": "hod123",
+        "role": "HOD",
+        "name": "Prof. M. Patil",
+        "title": "HOD - Mechanical",
+        "department": "Mechanical Engineering"
+    },
+    "hod": {
+        "password": "hod123",
+        "role": "HOD",
+        "name": "Department Head",
+        "title": "Head of Department",
+        "department": "All"
+    }
+}
 
 # Ensure dataset and ML model are initialized
 def init_system():
@@ -45,7 +92,6 @@ def predict_single_sentiment(text):
         model, vectorizer = load_ml_assets()
         
     if model is None or vectorizer is None:
-        # Fallback basic rule classifier if ML model pickle isn't loaded yet
         text_lower = text.lower()
         pos_words = ["good", "great", "excellent", "best", "top", "helpful", "clean", "wonderful", "outstanding", "smooth"]
         neg_words = ["bad", "poor", "outdated", "slow", "broken", "worst", "unhelpful", "strict", "dirty", "unhygienic"]
@@ -63,26 +109,79 @@ def predict_single_sentiment(text):
     
     pred = model.predict(tfidf_vec)[0]
     
-    # Calculate confidence probability if model supports predict_proba or decision_function
     confidence = 0.90
     if hasattr(model, "predict_proba"):
         probs = model.predict_proba(tfidf_vec)[0]
         confidence = float(np.max(probs))
     elif hasattr(model, "decision_function"):
         decision = model.decision_function(tfidf_vec)[0]
-        # Softmax approximation
         exp_dec = np.exp(decision - np.max(decision))
         probs = exp_dec / np.sum(exp_dec)
         confidence = float(np.max(probs))
         
     return pred, round(confidence, 4)
 
+# ----------------------------------------------------
+# AUTHENTICATION API
+# ----------------------------------------------------
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login():
+    data = request.json or {}
+    username = data.get("username", "").strip().lower()
+    password = data.get("password", "").strip()
+    
+    user_info = USERS.get(username)
+    if user_info and user_info["password"] == password:
+        session["user"] = {
+            "username": username,
+            "role": user_info["role"],
+            "name": user_info["name"],
+            "title": user_info["title"],
+            "department": user_info["department"]
+        }
+        return jsonify({
+            "status": "success",
+            "message": f"Welcome back, {user_info['name']}!",
+            "user": session["user"]
+        })
+    
+    return jsonify({
+        "status": "error",
+        "message": "Invalid username or password. Please verify credentials."
+    }), 401
+
+@app.route("/api/auth/logout", methods=["POST", "GET"])
+def auth_logout():
+    session.clear()
+    return jsonify({"status": "success", "message": "Logged out successfully."})
+
+@app.route("/api/auth/current-user", methods=["GET"])
+def auth_current_user():
+    user = session.get("user")
+    if user:
+        return jsonify({"authenticated": True, "user": user})
+    return jsonify({"authenticated": False, "user": None, "role": "Student"})
+
+# ----------------------------------------------------
+# PAGE ROUTE
+# ----------------------------------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
 
+# ----------------------------------------------------
+# DASHBOARD API (RESTRICTED TO PRINCIPAL / HOD / ADMIN)
+# ----------------------------------------------------
 @app.route("/api/dashboard-summary", methods=["GET"])
 def get_dashboard_summary():
+    # Role Protection Check
+    current_user = session.get("user")
+    if not current_user:
+        return jsonify({
+            "status": "error",
+            "message": "Access Denied: Only Department Heads (HOD), Principal, and Admin can access analytics."
+        }), 403
+
     if not os.path.exists(DATASET_FILE):
         init_system()
         
@@ -99,22 +198,14 @@ def get_dashboard_summary():
     neu_pct = round((neu_count / total_surveys) * 100, 1) if total_surveys > 0 else 0
     neg_pct = round((neg_count / total_surveys) * 100, 1) if total_surveys > 0 else 0
     
-    # Facility-wise breakdown
     facility_grouped = df.groupby(['facility', 'sentiment']).size().unstack(fill_value=0).to_dict(orient='index')
-    
-    # Department-wise breakdown
     dept_grouped = df.groupby(['department', 'sentiment']).size().unstack(fill_value=0).to_dict(orient='index')
-    
-    # Department average rating
     dept_ratings = df.groupby('department')['rating'].mean().round(2).to_dict()
-    
-    # Facility average rating
     facility_ratings = df.groupby('facility')['rating'].mean().round(2).to_dict()
     
     top_facility = max(facility_ratings, key=facility_ratings.get) if facility_ratings else "N/A"
     low_facility = min(facility_ratings, key=facility_ratings.get) if facility_ratings else "N/A"
     
-    # Load ML metrics comparison
     metrics_data = {}
     if os.path.exists(METRICS_FILE):
         with open(METRICS_FILE, "r") as f:
@@ -124,6 +215,7 @@ def get_dashboard_summary():
     
     return jsonify({
         "status": "success",
+        "user": current_user,
         "total_surveys": total_surveys,
         "sentiment_counts": {
             "Positive": pos_count,
@@ -145,6 +237,9 @@ def get_dashboard_summary():
         "recent_responses": recent_responses
     })
 
+# ----------------------------------------------------
+# STUDENT SURVEY FEEDBACK (PUBLIC)
+# ----------------------------------------------------
 @app.route("/api/submit-feedback", methods=["POST"])
 def submit_feedback():
     data = request.json or {}
@@ -158,10 +253,8 @@ def submit_feedback():
     if not review_text:
         return jsonify({"status": "error", "message": "Review text cannot be empty."}), 400
         
-    # AI Sentiment prediction
     pred_sentiment, confidence = predict_single_sentiment(review_text)
     
-    # Generate new student ID
     if os.path.exists(DATASET_FILE):
         df = pd.read_csv(DATASET_FILE)
         new_id = f"STU{len(df) + 1:04d}"
@@ -204,8 +297,18 @@ def api_predict_sentiment():
         "cleaned_text": preprocess_text(text)
     })
 
+# ----------------------------------------------------
+# ALL RESPONSES EXPLORER (RESTRICTED TO STAFF/MANAGEMENT)
+# ----------------------------------------------------
 @app.route("/api/all-responses", methods=["GET"])
 def get_all_responses():
+    current_user = session.get("user")
+    if not current_user:
+        return jsonify({
+            "status": "error",
+            "message": "Access Denied: Please log in as Head or Principal to view student responses."
+        }), 403
+
     if not os.path.exists(DATASET_FILE):
         init_system()
         
@@ -218,6 +321,11 @@ def get_all_responses():
     
     filtered_df = df.copy()
     
+    # If HOD has a specific department and no explicit filter is given, default to their dept
+    if current_user.get("role") == "HOD" and current_user.get("department") != "All":
+        if not dept_filter or dept_filter == "All":
+            filtered_df = filtered_df[filtered_df['department'] == current_user["department"]]
+
     if dept_filter and dept_filter != "All":
         filtered_df = filtered_df[filtered_df['department'] == dept_filter]
     if facility_filter and facility_filter != "All":
@@ -235,7 +343,8 @@ def get_all_responses():
     return jsonify({
         "status": "success",
         "total_records": len(records),
-        "data": records
+        "data": records,
+        "user_role": current_user.get("role")
     })
 
 # Initialize data and models on server start
@@ -244,4 +353,3 @@ init_system()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-

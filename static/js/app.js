@@ -1,8 +1,9 @@
-// EduPulse AI - JavaScript Frontend Application Logic
+// EduPulse AI - JavaScript Frontend Application Logic with Role-Based Access Control
 
 document.addEventListener("DOMContentLoaded", function() {
     
     // Application State
+    let currentUser = null;
     let dashboardData = null;
     let allResponses = [];
     let charts = {};
@@ -13,10 +14,222 @@ document.addEventListener("DOMContentLoaded", function() {
     initThemeToggle();
     initGoogleForm();
     initFilterEvents();
+    initAuthModal();
     
-    // Initial Data Fetch
-    fetchDashboardData();
-    fetchAllResponses();
+    // Check authentication state on page load
+    checkAuthState();
+
+    // ----------------------------------------------------
+    // AUTHENTICATION & ROLE-BASED ACCESS CONTROL
+    // ----------------------------------------------------
+    function checkAuthState() {
+        fetch("/api/auth/current-user")
+            .then(res => res.json())
+            .then(data => {
+                if (data.authenticated && data.user) {
+                    setAuthenticatedState(data.user);
+                } else {
+                    setStudentState();
+                }
+            })
+            .catch(() => {
+                setStudentState();
+            });
+    }
+
+    function setAuthenticatedState(user) {
+        currentUser = user;
+
+        // Show restricted management tabs
+        document.querySelectorAll(".admin-nav-item").forEach(el => el.classList.remove("hidden"));
+
+        // Update header badges and buttons
+        const studentTag = document.getElementById("student-portal-tag");
+        const loginBtn = document.getElementById("open-login-btn");
+        const userBadge = document.getElementById("auth-user-badge");
+        const userText = document.getElementById("auth-user-text");
+        const logoutBtn = document.getElementById("logout-btn");
+        const dashSubtitle = document.getElementById("dashboard-subtitle");
+
+        if (studentTag) studentTag.classList.add("hidden");
+        if (loginBtn) loginBtn.classList.add("hidden");
+        if (userBadge) {
+            userBadge.classList.remove("hidden");
+            if (userText) userText.innerText = `${user.role}: ${user.name}`;
+        }
+        if (logoutBtn) logoutBtn.classList.remove("hidden");
+
+        if (dashSubtitle) {
+            if (user.role === "HOD" && user.department !== "All") {
+                dashSubtitle.innerText = `Department Overview: ${user.department} | Logged in as ${user.name}`;
+            } else {
+                dashSubtitle.innerText = `Institutional Overview: Full Campus Analytics | Logged in as ${user.name}`;
+            }
+        }
+
+        // Fetch management data
+        fetchDashboardData();
+        fetchAllResponses();
+    }
+
+    function setStudentState() {
+        currentUser = null;
+
+        // Hide restricted tabs from students
+        document.querySelectorAll(".admin-nav-item").forEach(el => el.classList.add("hidden"));
+
+        // Ensure active tab is the student survey form
+        switchToTab("google-form-tab");
+
+        // Update header
+        const studentTag = document.getElementById("student-portal-tag");
+        const loginBtn = document.getElementById("open-login-btn");
+        const userBadge = document.getElementById("auth-user-badge");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        if (studentTag) studentTag.classList.remove("hidden");
+        if (loginBtn) loginBtn.classList.remove("hidden");
+        if (userBadge) userBadge.classList.add("hidden");
+        if (logoutBtn) logoutBtn.classList.add("hidden");
+    }
+
+    function initAuthModal() {
+        const loginBtn = document.getElementById("open-login-btn");
+        const modal = document.getElementById("login-modal");
+        const closeBtn = document.getElementById("close-modal-btn");
+        const loginForm = document.getElementById("staff-login-form");
+        const errorAlert = document.getElementById("login-error-alert");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        // Open modal
+        if (loginBtn && modal) {
+            loginBtn.addEventListener("click", () => {
+                modal.classList.remove("hidden");
+                if (errorAlert) errorAlert.classList.add("hidden");
+                const usernameInput = document.getElementById("login-username");
+                if (usernameInput) usernameInput.focus();
+            });
+        }
+
+        // Close modal
+        if (closeBtn && modal) {
+            closeBtn.addEventListener("click", () => {
+                modal.classList.add("hidden");
+            });
+        }
+
+        // Close when clicking outside modal box
+        if (modal) {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.classList.add("hidden");
+                }
+            });
+        }
+
+        // Quick demo login chips
+        document.querySelectorAll(".quick-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                const u = chip.getAttribute("data-user");
+                const p = chip.getAttribute("data-pass");
+                const userInput = document.getElementById("login-username");
+                const passInput = document.getElementById("login-password");
+                if (userInput) userInput.value = u;
+                if (passInput) passInput.value = p;
+                if (errorAlert) errorAlert.classList.add("hidden");
+            });
+        });
+
+        // Submit Login Form
+        if (loginForm) {
+            loginForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const username = document.getElementById("login-username").value.trim();
+                const password = document.getElementById("login-password").value.trim();
+                const submitBtn = document.getElementById("login-submit-btn");
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+                }
+
+                fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: username, password: password })
+                })
+                .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                .then(({ status, body }) => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard';
+                    }
+
+                    if (status === 200 && body.status === "success") {
+                        if (modal) modal.classList.add("hidden");
+                        loginForm.reset();
+                        setAuthenticatedState(body.user);
+                        // Automatically switch to Analytics Dashboard upon login
+                        switchToTab("dashboard-tab");
+                    } else {
+                        if (errorAlert) {
+                            errorAlert.innerText = body.message || "Invalid credentials.";
+                            errorAlert.classList.remove("hidden");
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard';
+                    }
+                    if (errorAlert) {
+                        errorAlert.innerText = "Connection error. Please try again.";
+                        errorAlert.classList.remove("hidden");
+                    }
+                });
+            });
+        }
+
+        // Logout action
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", () => {
+                fetch("/api/auth/logout", { method: "POST" })
+                    .then(() => {
+                        setStudentState();
+                    })
+                    .catch(() => {
+                        setStudentState();
+                    });
+            });
+        }
+    }
+
+    function switchToTab(targetTabId) {
+        document.querySelectorAll(".nav-tab").forEach(t => {
+            if (t.getAttribute("data-tab") === targetTabId) {
+                t.classList.add("active");
+            } else {
+                t.classList.remove("active");
+            }
+        });
+
+        document.querySelectorAll(".tab-pane").forEach(p => {
+            if (p.id === targetTabId) {
+                p.classList.add("active");
+            } else {
+                p.classList.remove("active");
+            }
+        });
+
+        if (targetTabId === "dashboard-tab" && dashboardData) {
+            setTimeout(() => renderDashboardCharts(dashboardData), 100);
+        } else if (targetTabId === "models-tab" && dashboardData) {
+            setTimeout(() => renderModelComparisonCharts(dashboardData.ml_model_metrics), 100);
+        } else if (targetTabId === "responses-tab") {
+            fetchAllResponses();
+        }
+    }
 
     // ----------------------------------------------------
     // TAB NAVIGATION
@@ -26,22 +239,7 @@ document.addEventListener("DOMContentLoaded", function() {
         tabs.forEach(tab => {
             tab.addEventListener("click", () => {
                 const targetTab = tab.getAttribute("data-tab");
-                
-                document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
-                document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
-                
-                tab.classList.add("active");
-                const targetPane = document.getElementById(targetTab);
-                if (targetPane) targetPane.classList.add("active");
-                
-                // Re-render charts when dashboard tab or models tab is selected
-                if (targetTab === "dashboard-tab" && dashboardData) {
-                    setTimeout(() => renderDashboardCharts(dashboardData), 100);
-                } else if (targetTab === "models-tab" && dashboardData) {
-                    setTimeout(() => renderModelComparisonCharts(dashboardData.ml_model_metrics), 100);
-                } else if (targetTab === "responses-tab") {
-                    fetchAllResponses();
-                }
+                switchToTab(targetTab);
             });
         });
     }
@@ -117,7 +315,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 const submitBtn = document.getElementById("submit-survey-btn");
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing AI...';
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
                 fetch("/api/submit-feedback", {
                     method: "POST",
@@ -137,7 +335,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
                     if (resData.status === "success") {
                         showSubmissionSuccess(resData);
-                        fetchDashboardData(); // Refresh metrics
+                        if (currentUser) {
+                            fetchDashboardData();
+                        }
                     } else {
                         alert(resData.message || "Submission failed.");
                     }
@@ -208,38 +408,56 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // ----------------------------------------------------
-    // DASHBOARD DATA FETCH & KPI RENDERING
+    // DASHBOARD DATA FETCH & RENDERING (AUTHENTICATED ONLY)
     // ----------------------------------------------------
     function fetchDashboardData() {
+        if (!currentUser) return;
+
         fetch("/api/dashboard-summary")
-            .then(res => res.json())
+            .then(res => {
+                if (res.status === 403) {
+                    setStudentState();
+                    throw new Error("Unauthorized");
+                }
+                return res.json();
+            })
             .then(data => {
-                dashboardData = data;
-                updateKPICards(data);
-                renderDashboardCharts(data);
-                if (data.ml_model_metrics) {
-                    renderModelComparisonTable(data.ml_model_metrics);
-                    renderModelComparisonCharts(data.ml_model_metrics);
-                    renderKeywords(data.ml_model_metrics.top_keywords);
+                if (data.status === "success") {
+                    dashboardData = data;
+                    updateKPICards(data);
+                    renderDashboardCharts(data);
+                    if (data.ml_model_metrics) {
+                        renderModelComparisonTable(data.ml_model_metrics);
+                        renderModelComparisonCharts(data.ml_model_metrics);
+                        renderKeywords(data.ml_model_metrics.top_keywords);
+                    }
                 }
             })
-            .catch(err => console.error("Error fetching dashboard data:", err));
+            .catch(err => {
+                console.warn("Dashboard fetch notice:", err.message);
+            });
     }
 
     function updateKPICards(data) {
-        document.getElementById("kpi-total-surveys").innerText = data.total_surveys.toLocaleString();
-        
-        document.getElementById("kpi-pos-pct").innerText = data.sentiment_percentages.Positive + "%";
-        document.getElementById("kpi-pos-count").innerText = `${data.sentiment_counts.Positive} Surveys`;
+        const totalSurveys = document.getElementById("kpi-total-surveys");
+        const posPct = document.getElementById("kpi-pos-pct");
+        const posCount = document.getElementById("kpi-pos-count");
+        const neuPct = document.getElementById("kpi-neu-pct");
+        const neuCount = document.getElementById("kpi-neu-count");
+        const negPct = document.getElementById("kpi-neg-pct");
+        const negCount = document.getElementById("kpi-neg-count");
+        const topFac = document.getElementById("kpi-top-facility");
+        const lowFac = document.getElementById("kpi-low-facility");
 
-        document.getElementById("kpi-neu-pct").innerText = data.sentiment_percentages.Neutral + "%";
-        document.getElementById("kpi-neu-count").innerText = `${data.sentiment_counts.Neutral} Surveys`;
-
-        document.getElementById("kpi-neg-pct").innerText = data.sentiment_percentages.Negative + "%";
-        document.getElementById("kpi-neg-count").innerText = `${data.sentiment_counts.Negative} Surveys`;
-
-        document.getElementById("kpi-top-facility").innerText = data.top_rated_facility || "N/A";
-        document.getElementById("kpi-low-facility").innerText = data.lowest_rated_facility || "N/A";
+        if (totalSurveys) totalSurveys.innerText = data.total_surveys.toLocaleString();
+        if (posPct) posPct.innerText = data.sentiment_percentages.Positive + "%";
+        if (posCount) posCount.innerText = `${data.sentiment_counts.Positive} Surveys`;
+        if (neuPct) neuPct.innerText = data.sentiment_percentages.Neutral + "%";
+        if (neuCount) neuCount.innerText = `${data.sentiment_counts.Neutral} Surveys`;
+        if (negPct) negPct.innerText = data.sentiment_percentages.Negative + "%";
+        if (negCount) negCount.innerText = `${data.sentiment_counts.Negative} Surveys`;
+        if (topFac) topFac.innerText = data.top_rated_facility || "N/A";
+        if (lowFac) lowFac.innerText = data.lowest_rated_facility || "N/A";
     }
 
     // ----------------------------------------------------
@@ -441,7 +659,6 @@ document.addEventListener("DOMContentLoaded", function() {
         container.innerHTML = html;
     }
 
-    // Helper to build/update Chart.js instances
     function createOrUpdateChart(canvasId, type, data, options) {
         if (charts[canvasId]) {
             charts[canvasId].destroy();
@@ -491,6 +708,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function fetchAllResponses() {
+        if (!currentUser) return;
+
         const search = document.getElementById("search-input") ? document.getElementById("search-input").value : "";
         const facility = document.getElementById("filter-facility") ? document.getElementById("filter-facility").value : "All";
         const dept = document.getElementById("filter-department") ? document.getElementById("filter-department").value : "All";
@@ -504,14 +723,23 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         fetch(`/api/all-responses?${params.toString()}`)
-            .then(res => res.json())
-            .then(resData => {
-                allResponses = resData.data;
-                renderResponsesTable(allResponses);
-                const countEl = document.getElementById("responses-count");
-                if (countEl) countEl.innerText = resData.total_records.toLocaleString();
+            .then(res => {
+                if (res.status === 403) {
+                    throw new Error("Unauthorized");
+                }
+                return res.json();
             })
-            .catch(err => console.error("Error fetching responses:", err));
+            .then(resData => {
+                if (resData.status === "success") {
+                    allResponses = resData.data;
+                    renderResponsesTable(allResponses);
+                    const countEl = document.getElementById("responses-count");
+                    if (countEl) countEl.innerText = resData.total_records.toLocaleString();
+                }
+            })
+            .catch(err => {
+                console.warn("Responses fetch notice:", err.message);
+            });
     }
 
     function renderResponsesTable(records) {
