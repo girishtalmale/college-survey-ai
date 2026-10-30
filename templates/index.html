@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Survey AI Sentiment Analysis & Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="light-mode">
+    <!-- Navbar Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>EduPulse AI</h1>
+                    <span>College Survey Sentiment Analysis System</span>
+                </div>
+            </div>
+            
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="google-form-tab">
+                    <i class="fa-solid fa-square-poll-vertical"></i>
+                    <span>Student Survey Form</span>
+                </button>
+                <button class="nav-tab" data-tab="dashboard-tab">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Analytics Dashboard</span>
+                </button>
+                <button class="nav-tab" data-tab="models-tab">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>AI Model Comparison</span>
+                </button>
+                <button class="nav-tab" data-tab="responses-tab">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>Survey Responses</span>
+                </button>
+            </nav>
+            
+            <div class="header-actions">
+                <span class="status-badge live-status">
+                    <span class="pulse-dot"></span> AI Engine Active
+                </span>
+                <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        
+        <!-- TAB 1: GOOGLE FORM STYLE SURVEY FORM -->
+        <section id="google-form-tab" class="tab-pane active">
+            <div class="google-form-wrapper">
+                <!-- Google Form Header Card -->
+                <div class="gf-header-card">
+                    <div class="gf-top-accent"></div>
+                    <div class="gf-header-body">
+                        <h2>Institute Facilities & Quality Feedback Survey</h2>
+                        <p>Your feedback is vital to improving campus facilities, faculty support, laboratories, and student services. Please provide your honest rating and comments below. Powered by AI Real-Time Sentiment Evaluation.</p>
+                        <div class="gf-meta-bar">
+                            <span class="gf-required-note">* Required questions</span>
+                            <span class="gf-ai-note"><i class="fa-solid fa-wand-magic-sparkles"></i> NLP AI Enabled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Form Body -->
+                <form id="student-survey-form" class="gf-form">
+                    
+                    <!-- Question 1: Department -->
+                    <div class="gf-card">
+                        <label class="gf-question-label">
+                            Department <span class="required">*</span>
+                        </label>
+                        <p class="gf-question-desc">Select your current academic engineering branch.</p>
+                        <div class="gf-input-group">
+                            <select id="form-department" class="gf-select" required>
+                                <option value="" disabled selected>Choose department...</option>
+                                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                                <option value="Electronics & Communication">Electronics & Communication</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Electrical Engineering">Electrical Engineering</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Question 2: Academic Year -->
+                    <div class="gf-card">
+                        <label class="gf-question-label">
+                            Academic Year <span class="required">*</span>
+                        </label>
+                        <div class="gf-radio-group">
+                            <label class="gf-radio-option">
+                                <input type="radio" name="academic_year" value="1st Year" checked>
+                                <span class="gf-radio-custom"></span>
+                                <span class="gf-option-text">1st Year (Freshman)</span>
+                            </label>
+                            <label class="gf-radio-option">
+                                <input type="radio" name="academic_year" value="2nd Year">
+                                <span class="gf-radio-custom"></span>
+                                <span class="gf-option-text">2nd Year (Sophomore)</span>
+                            </label>
+                            <label class="gf-radio-option">
+                                <input type="radio" name="academic_year" value="3rd Year">
+                                <span class="gf-radio-custom"></span>
+                                <span class="gf-option-text">3rd Year (Junior)</span>
+                            </label>
+                            <label class="gf-radio-option">
+                                <input type="radio" name="academic_year" value="4th Year">
+                                <span class="gf-radio-custom"></span>
+                                <span class="gf-option-text">4th Year (Senior)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Question 3: Institute Facility Category -->
+                    <div class="gf-card">
+                        <label class="gf-question-label">
+                            Facility to Review <span class="required">*</span>
+                        </label>
+                        <p class="gf-question-desc">Which institute facility or service domain are you evaluating?</p>
+                        <div class="gf-input-group">
+                            <select id="form-facility" class="gf-select" required>
+                                <option value="Faculties">Faculties & Teaching</option>
+                                <option value="College Infrastructure">College Infrastructure & Campus</option>
+                                <option value="Library Facilities">Library Facilities & E-Resources</option>
+                                <option value="Labs Infrastructure">Labs Infrastructure & Equipment</option>
+                                <option value="Placements">Placements & Career Cell</option>
+                                <option value="Internship">Internship Guidance & Support</option>
+                                <option value="Extracurricular Activities">Extracurricular & Sports Clubs</option>
+                                <option value="Industry Connect">Industry Connect & Guest Lectures</option>
+                                <option value="International Collaboration">International Collaboration & Exchange</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Question 4: Overall Rating (1-5 Star Scale) -->
+                    <div class="gf-card">
+                        <label class="gf-question-label">
+                            Facility Satisfaction Rating <span class="required">*</span>
+                        </label>
+                        <p class="gf-question-desc">Rate your experience from 1 (Very Poor / Unhappy) to 5 (Excellent / Happy)</p>
+                        <div class="gf-rating-scale">
+                            <div class="gf-rating-labels">
+                                <span>1 (Very Poor)</span>
+                                <span>3 (Neutral)</span>
+                                <span>5 (Excellent)</span>
+                            </div>
+                            <div class="gf-scale-pills">
+                                <label class="gf-pill"><input type="radio" name="rating" value="1"><span class="pill-box">1</span></label>
+                                <label class="gf-pill"><input type="radio" name="rating" value="2"><span class="pill-box">2</span></label>
+                                <label class="gf-pill"><input type="radio" name="rating" value="3"><span class="pill-box">3</span></label>
+                                <label class="gf-pill"><input type="radio" name="rating" value="4" checked><span class="pill-box">4</span></label>
+                                <label class="gf-pill"><input type="radio" name="rating" value="5"><span class="pill-box">5</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 5: Detailed Feedback Text -->
+                    <div class="gf-card">
+                        <label class="gf-question-label">
+                            Detailed Feedback & Review Comments <span class="required">*</span>
+                        </label>
+                        <p class="gf-question-desc">Describe your experience, concerns, or appreciation regarding this facility.</p>
+                        
+                        <div class="gf-textarea-wrapper">
+                            <textarea id="form-review-text" class="gf-textarea" rows="4" placeholder="Type your detailed feedback here..." required></textarea>
+                            
+                            <!-- Live AI Sentiment Detector Widget -->
+                            <div class="live-ai-sentiment-bar" id="live-ai-bar">
+                                <div class="ai-detect-label">
+                                    <i class="fa-solid fa-microchip"></i> Live AI Sentiment Prediction:
+                                </div>
+                                <div class="ai-detect-result" id="live-sentiment-badge">
+                                    <span class="sentiment-pill neutral">
+                                        <i class="fa-solid fa-face-meh"></i> Typing feedback...
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Actions -->
+                    <div class="gf-action-row">
+                        <button type="submit" class="gf-submit-btn" id="submit-survey-btn">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Survey
+                        </button>
+                        <button type="reset" class="gf-reset-btn">Clear form</button>
+                    </div>
+                </form>
+
+                <!-- Submission Success Banner -->
+                <div id="survey-success-card" class="gf-success-card hidden">
+                    <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <h3>Response Recorded!</h3>
+                    <p>Thank you for submitting your survey feedback. Your input has been processed by our AI Model and updated live in the Dashboard.</p>
+                    
+                    <div class="sentiment-result-summary" id="result-summary-box">
+                        <!-- Filled by JS -->
+                    </div>
+                    
+                    <button class="gf-submit-another-btn" id="submit-another-btn">
+                        Submit another response
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ANALYTICS DASHBOARD -->
+        <section id="dashboard-tab" class="tab-pane">
+            
+            <!-- Dashboard Controls Bar -->
+            <div class="dash-controls">
+                <div class="dash-title">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Executive Sentiment Dashboard</h2>
+                    <p>Comprehensive survey analytics across institute facilities and departments.</p>
+                </div>
+                <div class="dash-actions">
+                    <button id="refresh-dash-btn" class="secondary-btn"><i class="fa-solid fa-rotate-right"></i> Refresh Data</button>
+                    <button id="export-report-btn" class="primary-btn"><i class="fa-solid fa-file-export"></i> Export Report</button>
+                </div>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon total"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Total Student Surveys</span>
+                        <h3 class="kpi-value" id="kpi-total-surveys">0</h3>
+                        <span class="kpi-sub">Across 9 Facilities</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon positive"><i class="fa-solid fa-face-smile"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Happy / Positive</span>
+                        <h3 class="kpi-value" id="kpi-pos-pct">0%</h3>
+                        <span class="kpi-sub" id="kpi-pos-count">0 Surveys</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon neutral"><i class="fa-solid fa-face-meh"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Neutral</span>
+                        <h3 class="kpi-value" id="kpi-neu-pct">0%</h3>
+                        <span class="kpi-sub" id="kpi-neu-count">0 Surveys</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon negative"><i class="fa-solid fa-face-frown"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Unhappy / Negative</span>
+                        <h3 class="kpi-value" id="kpi-neg-pct">0%</h3>
+                        <span class="kpi-sub" id="kpi-neg-count">0 Surveys</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card highlight-card">
+                    <div class="kpi-icon top-rated"><i class="fa-solid fa-award"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Top Rated Facility</span>
+                        <h4 class="kpi-sub-header" id="kpi-top-facility">Loading...</h4>
+                        <span class="kpi-sub">Highest Student Rating</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card alert-card">
+                    <div class="kpi-icon low-rated"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="kpi-details">
+                        <span class="kpi-title">Needs Attention</span>
+                        <h4 class="kpi-sub-header" id="kpi-low-facility">Loading...</h4>
+                        <span class="kpi-sub">Lowest Student Rating</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section Grid -->
+            <div class="charts-grid">
+                
+                <!-- Facility-wise Sentiment Stacked Bar Chart -->
+                <div class="chart-card full-width-chart">
+                    <div class="chart-header">
+                        <h3><i class="fa-solid fa-building-columns"></i> Facility-Wise Sentiment Analysis (ATT4 Requirement)</h3>
+                        <span class="chart-badge">Positive vs Neutral vs Negative</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="facility-sentiment-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Department-wise Sentiment Distribution -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fa-solid fa-diagram-project"></i> Department-Wise Sentiment Analysis</h3>
+                        <span class="chart-badge">Branch Breakdown</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="dept-sentiment-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Overall Sentiment Donut Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fa-solid fa-chart-donut"></i> Overall Sentiment Ratio</h3>
+                        <span class="chart-badge">Global Survey Distribution</span>
+                    </div>
+                    <div class="chart-body donut-body">
+                        <canvas id="overall-sentiment-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Facility Average Ratings Ranking Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fa-solid fa-star"></i> Facility Satisfaction Rating Score (1 to 5)</h3>
+                        <span class="chart-badge">Average Rating</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="facility-rating-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Department Average Rating Comparison -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fa-solid fa-layer-group"></i> Department Satisfaction Score</h3>
+                        <span class="chart-badge">Engineering Branches</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="dept-rating-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: AI MODEL COMPARISON -->
+        <section id="models-tab" class="tab-pane">
+            <div class="section-title-box">
+                <h2><i class="fa-solid fa-code-compare"></i> Machine Learning Algorithm Comparative Analysis</h2>
+                <p>Evaluation of 4 Machine Learning classifiers on text feature vectors for Sentiment Classification.</p>
+            </div>
+
+            <!-- Model Metrics Table -->
+            <div class="model-cards-grid">
+                <div class="card-box">
+                    <div class="box-header">
+                        <h3><i class="fa-solid fa-trophy"></i> Comparative Metrics Table</h3>
+                        <span class="badge-accent" id="best-model-badge">Best Model: Loading...</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="model-comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Algorithm</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Model F1-Score Chart -->
+                <div class="card-box">
+                    <div class="box-header">
+                        <h3><i class="fa-solid fa-chart-column"></i> Algorithm F1-Score & Accuracy Comparison</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="model-metrics-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preprocessing & Keyword Analysis -->
+            <div class="model-cards-grid mt-4">
+                
+                <!-- Preprocessing Pipeline Explanation -->
+                <div class="card-box">
+                    <div class="box-header">
+                        <h3><i class="fa-solid fa-filter"></i> NLP Text Preprocessing Pipeline</h3>
+                    </div>
+                    <div class="pipeline-steps">
+                        <div class="step-card">
+                            <span class="step-num">1</span>
+                            <div class="step-info">
+                                <h4>Raw Survey Review Text</h4>
+                                <p>"The professors are extremely helpful, clear in explanation, and approachable after class!"</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-num">2</span>
+                            <div class="step-info">
+                                <h4>Lowercasing & Cleaning</h4>
+                                <p>"the professors are extremely helpful clear in explanation and approachable after class"</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-num">3</span>
+                            <div class="step-info">
+                                <h4>Stopword Removal & Tokenization</h4>
+                                <p><code>['professors', 'extremely', 'helpful', 'clear', 'explanation', 'approachable', 'class']</code></p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-num">4</span>
+                            <div class="step-info">
+                                <h4>TF-IDF Feature Vectorization</h4>
+                                <p>Extracted unigrams & bigrams mapped into 3,000 dimensional sparse feature matrix.</p>
+                            </div>
+                        </div>
+                        <div class="step-card highlight-step">
+                            <span class="step-num">5</span>
+                            <div class="step-info">
+                                <h4>AI Sentiment Classification</h4>
+                                <p><strong>Result: Positive (Happy)</strong> - Confidence: 94.2%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Keywords Per Sentiment -->
+                <div class="card-box">
+                    <div class="box-header">
+                        <h3><i class="fa-solid fa-tags"></i> Key Feature Words per Sentiment</h3>
+                    </div>
+                    <div class="keyword-groups" id="top-keywords-container">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SURVEY RESPONSES TABLE -->
+        <section id="responses-tab" class="tab-pane">
+            <div class="responses-header">
+                <div>
+                    <h2><i class="fa-solid fa-database"></i> Survey Responses Explorer</h2>
+                    <p>View, filter, and search through all submitted student feedback records.</p>
+                </div>
+            </div>
+
+            <!-- Filter Toolbar -->
+            <div class="filter-toolbar">
+                <div class="filter-item">
+                    <label><i class="fa-solid fa-magnifying-glass"></i> Search</label>
+                    <input type="text" id="search-input" class="filter-input" placeholder="Search keywords or Student ID...">
+                </div>
+
+                <div class="filter-item">
+                    <label><i class="fa-solid fa-building-columns"></i> Facility</label>
+                    <select id="filter-facility" class="filter-select">
+                        <option value="All">All Facilities</option>
+                        <option value="Faculties">Faculties</option>
+                        <option value="College Infrastructure">College Infrastructure</option>
+                        <option value="Library Facilities">Library Facilities</option>
+                        <option value="Labs Infrastructure">Labs Infrastructure</option>
+                        <option value="Placements">Placements</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Extracurricular Activities">Extracurricular Activities</option>
+                        <option value="Industry Connect">Industry Connect</option>
+                        <option value="International Collaboration">International Collaboration</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label><i class="fa-solid fa-graduation-cap"></i> Department</label>
+                    <select id="filter-department" class="filter-select">
+                        <option value="All">All Departments</option>
+                        <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                        <option value="Electronics & Communication">Electronics & Communication</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Electrical Engineering">Electrical Engineering</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label><i class="fa-solid fa-face-smile"></i> Sentiment</label>
+                    <select id="filter-sentiment" class="filter-select">
+                        <option value="All">All Sentiments</option>
+                        <option value="Positive">Positive (Happy)</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Negative">Negative (Unhappy)</option>
+                    </select>
+                </div>
+
+                <div class="filter-item filter-btn-item">
+                    <button id="reset-filters-btn" class="secondary-btn"><i class="fa-solid fa-rotate-left"></i> Reset Filters</button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="card-box mt-3">
+                <div class="table-info-bar">
+                    <span>Showing <strong id="responses-count">0</strong> records</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="responses-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Department</th>
+                                <th>Year</th>
+                                <th>Facility</th>
+                                <th>Rating</th>
+                                <th>Survey Review Text</th>
+                                <th>AI Sentiment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="responses-tbody">
+                            <!-- Filled dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 EduPulse AI - College Survey Sentiment Analysis System | Built in Python & JavaScript</p>
+        </div>
+    </footer>
+
+    <!-- Custom App JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

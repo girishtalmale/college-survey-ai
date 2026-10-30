@@ -1,0 +1,157 @@
+{
+  "best_model": "Multinomial Naive Bayes",
+  "models": {
+    "Multinomial Naive Bayes": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          161,
+          0,
+          0
+        ],
+        [
+          0,
+          109,
+          0
+        ],
+        [
+          0,
+          0,
+          90
+        ]
+      ],
+      "labels": [
+        "Positive",
+        "Neutral",
+        "Negative"
+      ]
+    },
+    "Logistic Regression": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          161,
+          0,
+          0
+        ],
+        [
+          0,
+          109,
+          0
+        ],
+        [
+          0,
+          0,
+          90
+        ]
+      ],
+      "labels": [
+        "Positive",
+        "Neutral",
+        "Negative"
+      ]
+    },
+    "Random Forest Classifier": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          161,
+          0,
+          0
+        ],
+        [
+          0,
+          109,
+          0
+        ],
+        [
+          0,
+          0,
+          90
+        ]
+      ],
+      "labels": [
+        "Positive",
+        "Neutral",
+        "Negative"
+      ]
+    },
+    "Support Vector Machine": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          161,
+          0,
+          0
+        ],
+        [
+          0,
+          109,
+          0
+        ],
+        [
+          0,
+          0,
+          90
+        ]
+      ],
+      "labels": [
+        "Positive",
+        "Neutral",
+        "Negative"
+      ]
+    }
+  },
+  "top_keywords": {
+    "Negative": [
+      "lack",
+      "low",
+      "zero",
+      "inactive",
+      "department",
+      "current",
+      "bureaucratic",
+      "remain",
+      "international collaboration",
+      "availability"
+    ],
+    "Neutral": [
+      "though",
+      "basic",
+      "hours",
+      "opportunities",
+      "good",
+      "could",
+      "limited",
+      "informative",
+      "academic",
+      "occasionally"
+    ],
+    "Positive": [
+      "great",
+      "excellent",
+      "well",
+      "research",
+      "campus",
+      "strong",
+      "exposure",
+      "modern",
+      "across",
+      "access"
+    ]
+  },
+  "total_samples": 1800,
+  "test_samples": 360
+}
